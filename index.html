@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>找寻属于你的香味人格</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* ================= 基础变量与字体 ================= */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #fdfbfb 0%, #f4eff0 50%, #e8e4ed 100%);
+            --text-main: #2b2b2b;
+            --text-sub: #666666;
+            --text-light: #999999;
+            --accent-color: #9b8c9b; 
+            
+            --serif-font: "Songti SC", "Noto Serif SC", "STSong", "SimSun", serif;
+            --sans-font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+            --cursive-font: "Snell Roundhand", "Brush Script MT", "cursive", "Georgia", serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            font-family: var(--serif-font);
+            line-height: 1.8;
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
+            min-height: 100vh;
+            scroll-behavior: smooth;
+        }
+
+        #app { width: 100%; max-width: 100%; position: relative; overflow-x: hidden; }
+
+        @media (min-width: 768px) {
+            #app { max-width: 1024px; box-shadow: 0 0 60px rgba(0,0,0,0.03); background: #fff; }
+        }
+
+        /* ================= 全局顶部状态栏 ================= */
+        .top-bar {
+            position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 1024px; height: 60px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 24px; z-index: 1000; pointer-events: none; 
+        }
+        .top-bar > * { pointer-events: auto; }
+
+        .close-btn { font-size: 24px; color: var(--text-main); cursor: pointer; transition: opacity 0.3s; }
+        .clock-btn { cursor: pointer; transition: transform 0.3s; }
+        .clock-btn:active { transform: scale(0.9); }
+        .clock-btn svg { stroke: var(--text-main); }
+        .clock-btn.hidden { display: none; }
+
+        /* ================= 页面切换控制 ================= */
+        .page { display: none; animation: fadeIn 0.6s ease; min-height: 100vh; width: 100%; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ================= 首页 ================= */
+        #home-page { position: relative; }
+        .hero-section {
+            height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 40px 24px; position: relative; overflow: hidden;
+        }
+        .glow-circle { position: absolute; border-radius: 50%; filter: blur(50px); z-index: 0; opacity: 0.6; animation: breathe 8s infinite alternate; }
+        .glow-1 { width: 300px; height: 300px; background: rgba(220, 200, 215, 0.6); top: 20%; left: 10%; }
+        .glow-2 { width: 400px; height: 400px; background: rgba(200, 210, 230, 0.6); bottom: 10%; right: -10%; animation-delay: -4s; }
+        @keyframes breathe { 0% { transform: scale(1) translate(0, 0); opacity: 0.5; } 100% { transform: scale(1.15) translate(20px, -20px); opacity: 0.8; } }
+
+        .hero-content { position: relative; z-index: 1; max-width: 600px; }
+        .hero-title { font-size: 32px; font-weight: 500; letter-spacing: 4px; margin-bottom: 10px; }
+        .hero-eng { font-family: var(--cursive-font); font-size: 28px; color: var(--accent-color); margin-bottom: 40px; }
+        .hero-desc { font-size: 15px; color: var(--text-sub); line-height: 2.2; margin-bottom: 60px; letter-spacing: 1px; }
+
+        .btn-group { display: flex; flex-direction: column; gap: 24px; width: 100%; max-width: 220px; margin: 0 auto; }
+        .btn-main {
+            background: var(--text-main); border: 1px solid var(--text-main); color: #fff;
+            padding: 15px 0; font-family: var(--serif-font); font-size: 16px; letter-spacing: 2px;
+            cursor: pointer; transition: all 0.3s; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .btn-main:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        .btn-scroll {
+            background: transparent; border: none; color: var(--accent-color);
+            font-family: var(--sans-font); font-size: 14px; letter-spacing: 1px;
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: color 0.3s;
+        }
+        .arrow-down { animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(5px); } 60% { transform: translateY(3px); } }
+
+        .small-info { position: absolute; bottom: 40px; font-size: 12px; color: var(--text-light); letter-spacing: 2px; z-index: 1; }
+
+        /* 12大香调区块 */
+        .scent-section { padding: 80px 24px; background: #fff; }
+        .scent-header { text-align: center; margin-bottom: 50px; }
+        .scent-header h2 { font-size: 28px; font-weight: 500; letter-spacing: 3px; margin-bottom: 10px; }
+        .scent-header p { font-family: var(--cursive-font); font-size: 22px; color: var(--accent-color); }
+
+        .scent-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; max-width: 900px; margin: 0 auto; }
+        @media (min-width: 768px) { .scent-grid { grid-template-columns: repeat(3, 1fr); gap: 24px; } }
+
+        .scent-card {
+            border-radius: 16px; padding: 30px 15px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; position: relative; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04); cursor: pointer;
+        }
+        .scent-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        .scent-card-eng { font-family: var(--cursive-font); font-size: 16px; color: rgba(0,0,0,0.5); margin-bottom: 5px; z-index: 2; letter-spacing: 1px; }
+        .scent-card h3 { font-size: 20px; font-weight: 500; letter-spacing: 2px; color: #333; margin-bottom: 8px; z-index: 2; }
+        .scent-card p { font-size: 13px; color: #555; letter-spacing: 0.5px; z-index: 2; }
+
+        /* 莫兰迪色系 */
+        .bg-chypre { background: linear-gradient(135deg, #a8bba0, #d4e0cd); }
+        .bg-floral { background: linear-gradient(135deg, #f0c4d1, #fce4ea); }
+        .bg-citrus { background: linear-gradient(135deg, #fcdba7, #f5c882); }
+        .bg-aquatic { background: linear-gradient(135deg, #b6d3e6, #d5e9f5); }
+        .bg-green { background: linear-gradient(135deg, #b8d4ad, #dcead7); }
+        .bg-fruity { background: linear-gradient(135deg, #d9a8b7, #e9c9d3); }
+        .bg-gourmand { background: linear-gradient(135deg, #e8c8a7, #f4e0cb); }
+        .bg-oriental { background: linear-gradient(135deg, #d8cdbf, #efe8df); }
+        .bg-aromatic { background: linear-gradient(135deg, #b3c1a7, #d5dfcc); }
+        .bg-woody { background: linear-gradient(135deg, #c7ae9c, #e0d0c4); }
+        .bg-fougere { background: linear-gradient(135deg, #c0b1d9, #dfd4ed); }
+        .bg-leather { background: linear-gradient(135deg, #9a8b83, #c1b3ab); }
+
+        .footer-cta { padding: 80px 24px 120px; text-align: center; background: #f9f7f8; }
+        .footer-cta p { font-size: 24px; font-weight: 500; color: var(--text-main); margin-bottom: 40px; letter-spacing: 2px; }
+        .footer-cta .btn-main { max-width: 240px; margin: 0 auto; padding: 14px 0; font-size: 15px; }
+
+        /* ================= 答题页 ================= */
+        #quiz-page { background: #fff; padding: 80px 24px 100px; max-width: 600px; margin: 0 auto; position: relative; }
+        .progress-text { text-align: center; font-family: var(--sans-font); font-size: 14px; color: var(--text-main); letter-spacing: 2px; margin-bottom: 40px; }
+        .question-title { font-size: 22px; font-weight: 500; line-height: 1.8; margin-bottom: 50px; letter-spacing: 1px; text-align: center; color: #111; }
+        
+        .options-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 50px; }
+        .option-btn {
+            background: #fafafa; border: 1px solid #eee; border-radius: 16px; padding: 20px 24px;
+            font-family: var(--serif-font); font-size: 15px; color: var(--text-sub); text-align: left;
+            cursor: pointer; transition: all 0.3s ease; letter-spacing: 1px; display: flex; align-items: center; gap: 16px; line-height: 1.6;
+        }
+        .option-btn::before { content: ''; width: 6px; height: 6px; border-radius: 50%; border: 1px solid #ccc; transition: all 0.2s; flex-shrink: 0; }
+        .option-btn.selected { background: #fff; color: var(--text-main); border-color: var(--accent-color); box-shadow: 0 4px 20px rgba(155, 140, 155, 0.12); }
+        .option-btn.selected::before { background: var(--accent-color); border-color: var(--accent-color); box-shadow: 0 0 0 4px rgba(155,140,155,0.1); }
+
+        .quiz-controls { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+        .btn-control { flex: 1; padding: 15px 0; border-radius: 30px; font-family: var(--serif-font); font-size: 16px; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; text-align: center; }
+        .btn-prev { background: transparent; border: 1px solid #ddd; color: var(--text-sub); }
+        .btn-prev:active { background: #f5f5f5; }
+        .btn-prev.hidden { visibility: hidden; }
+        .btn-next { background: var(--text-main); border: 1px solid var(--text-main); color: #fff; }
+        .btn-next:active { transform: scale(0.98); }
+
+        /* ================= 结果页 ================= */
+        /* 丰富视觉：加入极淡的光晕背景 */
+        #result-page { position: relative; background: #fff; }
+        .result-bg-glow {
+            position: absolute; top: 10%; right: -20%; width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(235,230,240,0.6) 0%, transparent 70%);
+            filter: blur(40px); z-index: 0; pointer-events: none;
+        }
+        .result-bg-glow-2 {
+            position: absolute; bottom: 20%; left: -20%; width: 250px; height: 250px;
+            background: radial-gradient(circle, rgba(225,235,230,0.6) 0%, transparent 70%);
+            filter: blur(40px); z-index: 0; pointer-events: none;
+        }
+
+        #result-capture-area { background: transparent; padding: 80px 24px 40px; max-width: 680px; margin: 0 auto; position: relative; z-index: 1; }
+        
+        /* 首屏排版 */
+        .res-hero { text-align: center; margin-bottom: 40px; position: relative; }
+        
+        .res-pre-title { font-family: var(--sans-font); font-size: 13px; letter-spacing: 4px; color: var(--text-light); margin-bottom: 10px; }
+        
+        /* 英文移到上方，极小号 */
+        .res-main-eng { font-family: var(--cursive-font); font-size: 20px; color: var(--accent-color); margin-bottom: 5px; opacity: 0.8; }
+        
+        /* 大标题 */
+        .res-main-title { font-size: 44px; font-weight: 500; letter-spacing: 5px; color: #111; position: relative; z-index: 1; margin-bottom: 15px; }
+        
+        /* 人格称号变大 */
+        .res-subtitle { font-size: 20px; color: var(--text-main); letter-spacing: 3px; margin-bottom: 25px; font-weight: 400; font-family: var(--serif-font); }
+        
+        /* 主副调 (增加层次感) */
+        .res-percent-wrap { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; font-family: var(--sans-font); font-size: 13px; }
+        .res-percent-item { background: #f5f5f7; padding: 6px 16px; border-radius: 20px; color: var(--text-sub); border: 1px solid #eee; box-shadow: inset 0 1px 3px rgba(255,255,255,0.8); }
+        .res-percent-item strong { color: var(--text-main); font-weight: 500; }
+
+        /* 关键词 # */
+        .keywords-wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 40px; }
+        .keyword-tag { font-family: var(--sans-font); font-size: 13px; color: var(--accent-color); letter-spacing: 1px; position: relative; }
+        
+        /* 金句 */
+        .res-quote {
+            font-family: var(--serif-font); font-size: 17px; color: #111; line-height: 1.8;
+            padding: 35px 20px; border-top: 1px solid #eee; border-bottom: 1px solid #eee;
+            margin: 0 auto; max-width: 500px; position: relative; font-style: italic;
+            background: linear-gradient(to right, rgba(250,250,250,0), rgba(250,250,250,0.6), rgba(250,250,250,0));
+        }
+        .res-quote::before, .res-quote::after { font-family: var(--serif-font); font-size: 40px; color: #ddd; position: absolute; line-height: 1; font-style: normal; }
+        .res-quote::before { content: '“'; top: 15px; left: 0; }
+        .res-quote::after { content: '”'; bottom: -5px; right: 0; }
+
+        /* 模块标题 (增加渐变线和装饰) */
+        .section-title { display: flex; align-items: center; margin: 50px 0 25px; }
+        .section-title span { font-family: var(--sans-font); font-size: 12px; color: var(--text-light); letter-spacing: 2px; margin-right: 15px; }
+        .section-title h3 { font-size: 18px; font-weight: 500; letter-spacing: 2px; color: var(--text-main); position: relative; padding-right: 10px;}
+        .section-title h3::after { content: '✦'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 10px; color: #ccc; }
+        .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, #eee, transparent); margin-left: 15px; }
+
+        /* 01 档案 */
+        .res-archive { font-family: var(--sans-font); font-size: 14px; color: var(--text-sub); line-height: 2.2; text-align: justify; margin-bottom: 20px; }
+        .res-archive p { margin-bottom: 12px; }
+
+        /* 02 解析 */
+        .trait-card { margin-bottom: 20px; background: #fbfbfb; padding: 20px; border-radius: 12px; border: 1px solid #f5f5f5; }
+        .trait-title { font-size: 15px; font-weight: 500; color: var(--text-main); margin-bottom: 8px; display: flex; align-items: center; }
+        .trait-title::before { content: ''; display: inline-block; width: 5px; height: 5px; background: var(--text-main); border-radius: 50%; margin-right: 10px; }
+        .trait-desc { font-family: var(--sans-font); font-size: 13px; color: var(--text-sub); line-height: 1.9; text-align: justify; padding-left: 15px; }
+
+        /* 03 生活方式 */
+        .lifestyle-list { background: #fff; padding: 25px; border-radius: 16px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.02); margin-top: 15px; }
+        .lifestyle-item { display: flex; margin-bottom: 15px; font-family: var(--sans-font); font-size: 13px; line-height: 1.8; }
+        .lifestyle-item:last-child { margin-bottom: 0; }
+        .lifestyle-icon { color: var(--accent-color); margin-right: 10px; font-weight: bold; flex-shrink: 0; }
+        .lifestyle-text strong { color: var(--text-main); font-weight: 500; display: inline-block; width: 70px; }
+
+        /* 04 专属香气 */
+        .scent-pyramid { border-top: 1px solid #eee; margin-top: 20px; }
+        .pyramid-item { border-bottom: 1px solid #eee; padding: 20px 0; display: flex; align-items: flex-start; }
+        .pyramid-label { width: 70px; flex-shrink: 0; font-size: 15px; color: var(--text-main); font-weight: 500; }
+        .pyramid-content { flex: 1; }
+        .pyramid-eng { font-family: var(--cursive-font); font-size: 20px; color: var(--accent-color); margin-bottom: 5px; }
+        .pyramid-desc { font-family: var(--sans-font); font-size: 13px; color: var(--text-sub); line-height: 1.7; }
+        
+        .scent-scene { margin-top: 25px; font-family: var(--sans-font); font-size: 13px; color: var(--text-sub); text-align: center; background: #f9f9f9; padding: 15px; border-radius: 8px; }
+
+        /* 隐藏解析 */
+        .insight-box {
+            margin-top: 40px; padding: 25px; border-radius: 16px; background: #fff;
+            border: 1px solid #eee; box-shadow: 0 10px 30px rgba(0,0,0,0.03); position: relative; overflow: hidden;
+        }
+        .insight-box::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent-color); }
+        .insight-title { font-family: var(--sans-font); font-size: 12px; color: var(--text-light); letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
+        .insight-content { font-family: var(--serif-font); font-size: 15px; color: var(--text-main); line-height: 1.8; }
+        .insight-content strong { color: var(--accent-color); font-weight: 500; }
+
+        /* 底部操作按钮 */
+        .action-btns { display: flex; flex-direction: column; gap: 15px; max-width: 680px; margin: 0 auto; padding: 0 24px 40px; position: relative; z-index: 1; }
+        .btn-save { background: var(--text-main); border: 1px solid var(--text-main); color: #fff; border-radius: 30px; padding: 15px 0; font-family: var(--serif-font); font-size: 16px; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; text-align: center; }
+        .btn-save:active { transform: scale(0.98); background: #000; }
+        .btn-restart { background: transparent; border: 1px solid #ccc; border-radius: 30px; padding: 15px 0; color: var(--text-sub); font-family: var(--serif-font); font-size: 16px; letter-spacing: 2px; cursor: pointer; transition: all 0.3s; text-align: center; }
+        .btn-restart:active { background: #f5f5f5; }
+
+        /* ================= 弹窗与提示 ================= */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 3000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-content { width: 85%; max-width: 400px; background: rgba(255, 255, 255, 0.95); border-radius: 24px; padding: 40px 30px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.8); transform: translateY(20px) scale(0.95); transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); max-height: 80vh; overflow-y: auto; text-align: center; }
+        .modal-overlay.show .modal-content { transform: translateY(0) scale(1); }
+        .modal-glow { position: absolute; width: 200px; height: 200px; top: -50px; left: 50%; transform: translateX(-50%); border-radius: 50%; filter: blur(30px); opacity: 0.5; z-index: -1; }
+        .modal-close { position: absolute; top: 20px; right: 20px; font-size: 20px; color: #999; cursor: pointer; width: 30px; height: 30px; display: flex; justify-content: center; align-items: center; border-radius: 50%; }
+        .modal-close:hover { background: rgba(0,0,0,0.05); color: #333; }
+        .modal-title-cn { font-size: 24px; font-weight: 500; margin-bottom: 5px; letter-spacing: 2px; }
+        .modal-title-eng { font-family: var(--cursive-font); font-size: 22px; color: var(--accent-color); margin-bottom: 25px; }
+        .modal-text { font-family: var(--sans-font); font-size: 14px; color: var(--text-sub); line-height: 1.9; text-align: justify; }
+
+        /* 兑换码输入框 */
+        .redeem-input {
+            width: 100%; padding: 12px 15px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px;
+            font-family: var(--sans-font); font-size: 16px; text-align: center; letter-spacing: 2px; outline: none;
+            transition: border-color 0.3s;
+        }
+        .redeem-input:focus { border-color: var(--text-main); }
+        .redeem-error { color: #e74c3c; font-size: 13px; margin-bottom: 15px; display: none; }
+
+        .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background: rgba(0, 0, 0, 0.7); color: #fff; padding: 12px 24px; border-radius: 30px; font-family: var(--sans-font); font-size: 14px; letter-spacing: 1px; z-index: 4000; opacity: 0; pointer-events: none; transition: all 0.3s ease; backdrop-filter: blur(4px); }
+        .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 2000; display: none; opacity: 0; transition: opacity 0.3s; }
+        .drawer-overlay.show { display: block; opacity: 1; }
+        .drawer { position: fixed; top: 0; right: -100%; width: 80%; max-width: 360px; height: 100vh; background: #fff; z-index: 2001; transition: right 0.4s cubic-bezier(0.25, 1, 0.5, 1); padding: 80px 30px 40px; color: var(--text-main); overflow-y: auto; box-shadow: -10px 0 30px rgba(0,0,0,0.1); }
+        .drawer.show { right: 0; }
+        .drawer-title { font-size: 20px; font-weight: 500; margin-bottom: 30px; letter-spacing: 2px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .history-item { border-bottom: 1px solid #f5f5f5; padding: 20px 0; cursor: pointer; transition: opacity 0.2s; }
+        .history-item h4 { font-size: 16px; margin-bottom: 5px; font-weight: 500; }
+        .history-item span { font-family: var(--sans-font); font-size: 12px; color: var(--text-sub); }
+        .empty-history { font-family: var(--sans-font); font-size: 14px; color: var(--text-sub); margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="top-bar" id="top-bar">
+        <span class="close-btn" id="close-btn" onclick="goHome()">✕</span>
+        <div class="clock-btn" id="clock-btn" onclick="toggleHistory()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+        </div>
+    </div>
+
+    <!-- 首页 -->
+    <div id="home-page" class="page active">
+        <div class="hero-section">
+            <div class="glow-circle glow-1"></div>
+            <div class="glow-circle glow-2"></div>
+            <div class="hero-content">
+                <h1 class="hero-title">找寻属于你的香味人格</h1>
+                <div class="hero-eng">Scent Portrait</div>
+                <div class="hero-desc">
+                    爱是一种神圣<br>我们用嗅觉奔赴自我<br>气味便是你的圣言<br><br>探索专属于你灵魂底色的香氛名片
+                </div>
+                <div class="btn-group">
+                    <button class="btn-main" onclick="showRedeemModal()">开始探索</button>
+                    <button class="btn-scroll" onclick="scrollToScents()">
+                        了解12大香调
+                        <svg class="arrow-down" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="small-info">30道情境题 &nbsp;|&nbsp; 12大香调 &nbsp;|&nbsp; 约五分钟</div>
+        </div>
+
+        <div class="scent-section" id="scent-list">
+            <div class="scent-header">
+                <h2>12种香调类型</h2>
+                <p>The 12 Scent Families</p>
+            </div>
+            <div class="scent-grid" id="scent-grid"></div>
+        </div>
+
+        <div class="footer-cta">
+            <p>准备好发现属于你的香味了吗？</p>
+            <button class="btn-main" onclick="showRedeemModal()">立即开始探索</button>
+        </div>
+    </div>
+
+    <!-- 答题页 -->
+    <div id="quiz-page" class="page">
+        <div class="progress-text" id="progress-text">01 / 30</div>
+        <h2 class="question-title" id="question-title">题目加载中...</h2>
+        <div class="options-list" id="options-list"></div>
+        <div class="quiz-controls">
+            <button class="btn-control btn-prev hidden" id="btn-prev" onclick="prevQuestion()">上一题</button>
+            <button class="btn-control btn-next" id="btn-next" onclick="nextQuestion()">下一题</button>
+        </div>
+    </div>
+
+    <!-- 结果页 -->
+    <div id="result-page" class="page">
+        <div class="result-bg-glow"></div>
+        <div class="result-bg-glow-2"></div>
+        
+        <!-- 截图容器 -->
+        <div id="result-capture-area">
+            <div class="res-hero">
+                <div class="res-pre-title">你的本命香是</div>
+                <!-- 英文移至上方，小字 -->
+                <div class="res-main-eng" id="res-main-eng">Chypre</div>
+                <!-- 大标题 -->
+                <div class="res-main-title" id="res-main-title">复古西普调</div>
+                <!-- 人格称号变大 -->
+                <div class="res-subtitle" id="res-title">藏于时光深处的神秘主义者</div>
+                
+                <div class="res-percent-wrap">
+                    <div class="res-percent-item">主调：<strong id="res-main-percent">西普 45%</strong></div>
+                    <div class="res-percent-item">副调：<strong id="res-sub-percent">木质 30%</strong></div>
+                </div>
+
+                <div class="keywords-wrap" id="res-keywords"></div>
+
+                <div class="res-quote" id="res-quote">
+                    有些魅力不需要被看见太多次，一次就足够让人记住。
+                </div>
+            </div>
+
+            <div class="section-title"><span>01</span><h3>专属香气人格档案</h3></div>
+            <div class="res-archive" id="res-archive"></div>
+
+            <div class="section-title"><span>02</span><h3>深度性格解析</h3></div>
+            <div id="res-traits"></div>
+
+            <div class="section-title"><span>03</span><h3>理想生活方式</h3></div>
+            <div class="lifestyle-list" id="res-lifestyle"></div>
+
+            <div class="section-title"><span>04</span><h3>你的专属香气</h3></div>
+            <div style="font-family: var(--sans-font); font-size: 14px; color: var(--text-main); margin-bottom: 20px;">
+                <strong>代表香气：</strong><span id="res-representative"></span>
+            </div>
+            
+            <div class="scent-pyramid">
+                <div class="pyramid-item">
+                    <div class="pyramid-label">前调</div>
+                    <div class="pyramid-content">
+                        <div class="pyramid-eng">Top Note</div>
+                        <div class="pyramid-desc" id="res-top"></div>
+                    </div>
+                </div>
+                <div class="pyramid-item">
+                    <div class="pyramid-label">中调</div>
+                    <div class="pyramid-content">
+                        <div class="pyramid-eng">Middle Note</div>
+                        <div class="pyramid-desc" id="res-middle"></div>
+                    </div>
+                </div>
+                <div class="pyramid-item">
+                    <div class="pyramid-label">后调</div>
+                    <div class="pyramid-content">
+                        <div class="pyramid-eng">Base Note</div>
+                        <div class="pyramid-desc" id="res-base"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scent-scene" id="res-scene"></div>
+
+            <div class="insight-box">
+                <div class="insight-title">Hidden Insight</div>
+                <div class="insight-content" id="res-insight"></div>
+            </div>
+        </div>
+
+        <!-- 底部操作区 -->
+        <div class="action-btns">
+            <button class="btn-save" onclick="saveResultImage()">保存结果</button>
+            <button class="btn-restart" onclick="goHome()">重新测试</button>
+        </div>
+    </div>
+</div>
+
+<!-- 兑换码弹窗 -->
+<div class="modal-overlay" id="redeem-modal">
+    <div class="modal-content" style="max-width: 320px; padding: 30px;">
+        <div class="modal-title-cn">进入测试</div>
+        <div class="modal-title-eng">Enter Code</div>
+        <input type="text" id="redeem-input" class="redeem-input" placeholder="请输入兑换码" autocomplete="off">
+        <div class="redeem-error" id="redeem-error">兑换码错误，请重新输入</div>
+        <button class="btn-main" style="width: 100%; border-radius: 8px; padding: 12px 0;" onclick="verifyCode()">确认进入</button>
+        <div style="margin-top: 15px; font-size: 12px; color: #999; cursor: pointer;" onclick="closeRedeemModal()">取消</div>
+    </div>
+</div>
+
+<!-- 香调详情弹窗 -->
+<div class="modal-overlay" id="scent-modal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-glow" id="modal-glow"></div>
+        <div class="modal-close" onclick="closeModal(event)">✕</div>
+        <div class="modal-title-cn" id="modal-title-cn"></div>
+        <div class="modal-title-eng" id="modal-title-eng"></div>
+        <div class="modal-text" id="modal-text"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast">请选择一个选项</div>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="toggleHistory()"></div>
+<div class="drawer" id="drawer">
+    <div class="drawer-title">历史测试记录</div>
+    <div id="history-list"></div>
+</div>
+
+<script>
+    // ==========================================
+    // 1. 香调简介卡片数据
+    // ==========================================
+    const scentData = {
+        'chypre': { cn: "西普调", eng: "Chypre", desc: "雨后苔藓包裹的复古诗意", bgClass: "bg-chypre", detail: "西普调是香水界的古典乐。以橡木苔、广藿香和佛手柑为核心，初闻带有些许生涩的绿意与微苦，甚至有些拒人千里。但随着体温的融合，会散发出极具故事感的深沉底蕴，冷艳孤高，像一本需要耐心阅读的旧书。" },
+        'floral': { cn: "花香调", eng: "Floral", desc: "永不落幕的春日花园", bgClass: "bg-floral", detail: "花香调是千回百转的柔情。从清透的白花到丰盈的玫瑰，它对应着极高的情绪颗粒度。初闻是娇艳美好的迎接，深处却有不屈的筋骨。柔软，本身就是一种很高级的力量，让人心甘情愿沉溺于这座浪漫花园。" },
+        'citrus': { cn: "柑橘调", eng: "Citrus", desc: "剥开盛夏清晨的阳光", bgClass: "bg-citrus", detail: "柑橘调轻盈、剥开即见，没有复杂的伪装。佛手柑、柠檬、柚子带来极致的清爽与洁净感。它挥发得很快，像从不沉溺于负面情绪的人，短暂停留后总能清爽前行。它讨厌黏腻，带来一种高效、阳光、反内耗的生命力。" },
+        'aquatic': { cn: "水生调", eng: "Aquatic", desc: "海风裹挟雾气吹过悬崖", bgClass: "bg-aquatic", detail: "水生调透明、流动、没有压迫感。海风的咸涩模拟了初识时的冷感，西瓜酮的清凉对应着自我保护的壳。它不着痕迹却能环绕四周，像给亲密之人的那种不具攻击性、却无处不在的陪伴。安静、独立，又渴望靠岸。" },
+        'green': { cn: "绿叶调", eng: "Green", desc: "指尖掐断新鲜茎叶的绿意", bgClass: "bg-green", detail: "绿叶调带着植物的汁液感和轻微的泥土腥气。是无花果叶，是折断的青草，是刚下过雨的清晨。它有一点微苦，但极度透亮。它对应着理性与敏锐，在喧嚣的世界中显得极度清醒，干净、真实，永远住着一个少年。" },
+        'fruity': { cn: "果香调", eng: "Fruity", desc: "维他命与多巴胺的协奏曲", bgClass: "bg-fruity", detail: "果香调多汁、饱满、让人瞬间愉悦。黑加仑的酸甜或桃子的丰盈，总是第一时间抓住感官。它拒绝沉闷，前调的存在感极强，就像永远鲜活、敢于爱憎分明的样子，不记隔夜仇，拥抱当下。它是能够把快乐分给别人的开心果。" },
+        'gourmand': { cn: "美食调", eng: "Gourmand", desc: "童话世界里的美味漩涡", bgClass: "bg-gourmand", detail: "美食调是香草、焦糖与热牛奶的混合物，极具包裹感和治愈力。它没有攻击性，像冬夜里的一杯热饮，能瞬间卸下人的防备。它对应着愿意靠近的真心，但如果细闻，焦糖的微苦又提醒着别人：它的甜，是有深度和底线的。" },
+        'oriental': { cn: "东方调", eng: "Oriental", desc: "神秘寺庙传来的暮色沉钟", bgClass: "bg-oriental", detail: "东方调如深夜的壁炉与香料集市，树脂与琥珀交织出极大的温度与重量。香草的微甜中和了辛香的锐利，外表强大，内里却渴望深度的羁绊。它的留香极其霸道，一旦靠近，就很难戒掉，是不喧哗却让人无法忽视的气场。" },
+        'aromatic': { cn: "芳香调", eng: "Aromatic", desc: "被烈日晒暖的草药田埂", bgClass: "bg-aromatic", detail: "芳香调是揉碎的草本植物，薰衣草、迷迭香带着天然的安抚力。它不像花香那么娇贵，也没有木质那么深沉，它就像一阵风，轻轻拂过但不留下负担。随性而疗愈，不强求，却总能给身边的人带来极大的松弛感。" },
+        'woody': { cn: "木质调", eng: "Woody", desc: "漫步黄昏下的寂静森林", bgClass: "bg-woody", detail: "木质调有清晰骨架和安静留香，不依靠甜美或喧闹吸引注意。雪松对应原则，檀香藏着不常外露的体贴；它越到后调越显质地。沉稳、可靠、独立，长情且慢热，价值总在长期相处中被完整看见。" },
+        'fougere': { cn: "馥奇调", eng: "Fougère", desc: "薰衣草与蕨类大口呼吸", bgClass: "bg-fougere", detail: "馥奇调是薰衣草与苔藓的交响，干净、利落、中性。它的皂感像刚洗过的白衬衫，没有强烈的攻击性，却有着不可侵犯的清爽领域。它对应着克制与分寸，诠释着一种不被性别刻板印象定义的现代质感。" },
+        'leather': { cn: "皮革调", eng: "Leather", desc: "旧皮书与骑士手套的复古诗意", bgClass: "bg-leather", detail: "皮革调带着天然的粗粝与温度，像一件穿旧的机车夹克。藏红花的微辛是锋芒，烟熏感沉淀出阅历。它不讨好任何人，只为懂它的人散发迷人质感。锋利、不驯，不需要所有人都喜欢，只要被真正记住。" }
+    };
+
+    // ==========================================
+    // 2. 题库数据 (30题)
+    // ==========================================
+    const questions = [
+        { q: "周五的夜幕降临，你更向往哪一种气息？", opts: [{ t: "喧嚣派对里，香槟与熟透浆果交织的甜美空气", s: { '果': 2, '柑': 1 } }, { t: "三两知己在昏暗灯光下，伴着木质壁炉的长谈", s: { '木': 2, '花': 1 } }, { t: "独自散步，晚风拂过清冷海面留下的透明水汽", s: { '水': 2, '绿': 1 } }, { t: "城市边缘新开的艺术展，弥漫着未知与冒险的皮革味", s: { '皮': 2, '东': 1 } }] },
+        { q: "置身一个完全陌生的社交场合，你的本能反应是：", opts: [{ t: "像剥开一颗柑橘，主动散发清香去破冰", s: { '柑': 2, '果': 1 } }, { t: "像幽暗的苔藓，先安静观察，再寻找同频的灵魂", s: { '西': 2, '水': 1 } }, { t: "寻找一两个角落，进行深入且私密的交谈", s: { '木': 2, '花': 1 } }, { t: "随遇而安，像风吹过草地般自然融入或随时抽离", s: { '芳': 2, '绿': 1 } }] },
+        { q: "一场热闹的聚会结束后，你最期待回到怎样的状态？", opts: [{ t: "意犹未尽，想要换个地方继续感受夜晚的余温", s: { '果': 2, '皮': 1 } }, { t: "回到属于自己的绝对安全区，让气息慢慢沉淀", s: { '水': 2, '木': 1 } }, { t: "和刚认识的投缘之人，交换联系方式并期待下次", s: { '柑': 2, '花': 1 } }, { t: "顺路买一份热气腾腾的宵夜，用食物抚慰感官", s: { '美': 2, '芳': 1 } }] },
+        { q: "你更偏爱哪一种人际交往的节奏？", opts: [{ t: "高频且热烈，像盛夏的阳光一样耀眼", s: { '果': 2, '柑': 1 } }, { t: "少而深，像陈年的老木头，经得起时间打磨", s: { '木': 2, '西': 1 } }, { t: "有共同的自然爱好才聚，不刻意强求", s: { '绿': 2, '芳': 1 } }, { t: "忽冷忽热，全凭当下的心情与感受", s: { '水': 2, '皮': 1 } }] },
+        { q: "当朋友向你倾诉痛苦时，你通常会散发出怎样的气息？", opts: [{ t: "像柔和的花香，立刻给予拥抱与情感上的安慰", s: { '花': 2, '美': 1 } }, { t: "像清醒的绿叶，帮TA理性分析事情的前因后果", s: { '绿': 2, '柑': 1 } }, { t: "像安静的雪松，不需要太多言语，只是默默陪伴", s: { '木': 2, '水': 1 } }, { t: "用幽默和轻松的话语化解对方的沉重", s: { '果': 2, '馥': 1 } }] },
+        { q: "你表达关心和在意的方式，更倾向于：", opts: [{ t: "说出很多暖心且感性的话", s: { '花': 2, '美': 1 } }, { t: "直接帮对方把问题解决掉", s: { '柑': 2, '木': 1 } }, { t: "默默记住对方随口提过的小细节", s: { '西': 2, '花': 1 } }, { t: "给足对方空间，不去过度打扰", s: { '水': 2, '芳': 1 } }] },
+        { q: "你更容易被哪种特质的人深深打动？", opts: [{ t: "热烈直接，像熟透的水果毫无保留", s: { '果': 2, '皮': 1 } }, { t: "温柔细腻，像清晨带着露水的白花", s: { '花': 2, '美': 1 } }, { t: "可靠沉稳，像一棵可以依靠的大树", s: { '木': 2, '馥': 1 } }, { t: "神秘有故事，像一本泛黄的旧书", s: { '东': 2, '西': 1 } }] },
+        { q: "如果用一种天气来形容你的情绪底色，你觉得是：", opts: [{ t: "盛夏晴空，明亮且毫无阴霾", s: { '柑': 2, '果': 1 } }, { t: "春日微雨，柔和敏感且多情", s: { '花': 2, '水': 1 } }, { t: "秋日黄昏，稳定克制且带点清冷", s: { '木': 2, '馥': 1 } }, { t: "雷暴前夕，浓烈深邃且充满张力", s: { '东': 2, '皮': 1 } }] },
+        { q: "在日常交往中，最能触碰你底线的是：", opts: [{ t: "过于黏腻，让人喘不过气的关系", s: { '柑': 2, '水': 1 } }, { t: "试图控制你，干涉你决定的人", s: { '皮': 2, '木': 1 } }, { t: "冷暴力，把你晾在一边不沟通", s: { '花': 2, '美': 1 } }, { t: "完全没有边界感，随便介入你的生活", s: { '西': 2, '馥': 1 } }] },
+        { q: "在亲密关系里，你最渴求的底色是什么？", opts: [{ t: "高频回应，被甜甜的日常包裹", s: { '美': 2, '花': 1 } }, { t: "各自独立，但在精神上并肩作战", s: { '木': 2, '柑': 1 } }, { t: "自由自在，即使不常见面也互相惦记", s: { '水': 2, '芳': 1 } }, { t: "强烈的化学反应，有拉扯也有火花", s: { '东': 2, '皮': 1 } }] },
+        { q: "当别人试图靠近你的内心时，你的潜意识会：", opts: [{ t: "很快熟络，乐于分享自己的一切", s: { '果': 2, '美': 1 } }, { t: "先保持礼貌的距离，观察对方的动机", s: { '馥': 2, '水': 1 } }, { t: "用轻松幽默打太极，不轻易展现脆弱", s: { '柑': 2, '皮': 1 } }, { t: "需要非常长的时间，才会真正交底", s: { '西': 2, '木': 1 } }] },
+        { q: "你理想中的周末画面是怎样的？", opts: [{ t: "和爱人或朋友逛集市，吃甜品，买鲜花", s: { '美': 2, '花': 1 } }, { t: "去山林徒步，听踩在落叶上的声音", s: { '绿': 2, '木': 1 } }, { t: "去逛展、看话剧，沉浸在艺术氛围里", s: { '西': 2, '东': 1 } }, { t: "待在干净清爽的家里，做一次大扫除", s: { '馥': 2, '柑': 1 } }] },
+        { q: "面临一项充满未知的新任务，你的第一反应是：", opts: [{ t: "先做好严密的风险评估和计划", s: { '木': 2, '馥': 1 } }, { t: "边做边调整，快速找到解决方案", s: { '柑': 2, '绿': 1 } }, { t: "凭直觉冲一把，享受刺激感", s: { '皮': 2, '东': 1 } }, { t: "寻找有趣的伙伴一起头脑风暴", s: { '果': 2, '花': 1 } }] },
+        { q: "你更喜欢在怎样的空间里独处？", opts: [{ t: "极简、透明、充满冷调的现代房间", s: { '水': 2, '柑': 1 } }, { t: "木色自然、有大量绿植和阳光的房间", s: { '绿': 2, '木': 1 } }, { t: "充满浓郁复古感、堆满书的房间", s: { '东': 2, '西': 1 } }, { t: "放着柔软抱枕、点着香薰蜡烛的暖调房间", s: { '美': 2, '花': 1 } }] },
+        { q: "当你感到疲惫时，哪种气味最能让你回血？", opts: [{ t: "剥开一颗新鲜柠檬的酸涩与清爽", s: { '柑': 2, '绿': 1 } }, { t: "刚烤好的香草饼干与热牛奶的甜香", s: { '美': 2, '花': 1 } }, { t: "雨后森林里，泥土与雪松混合的冷冽", s: { '木': 2, '水': 1 } }, { t: "点燃带有迷迭香与鼠尾草的草药香", s: { '芳': 2, '馥': 1 } }] },
+        { q: "在挑选衣物时，你更注重哪种质感？", opts: [{ t: "干净利落、剪裁得体的白衬衫", s: { '馥': 2, '柑': 1 } }, { t: "舒服自然、有棉麻质感的宽松衣物", s: { '芳': 2, '绿': 1 } }, { t: "有记忆点、带有铆钉或皮革元素的穿搭", s: { '皮': 2, '东': 1 } }, { t: "氛围感强、有复古印花或蕾丝的设计", s: { '花': 2, '西': 1 } }] },
+        { q: "你更会被哪种风格的音乐所打动？", opts: [{ t: "节奏感强、充满活力的流行乐", s: { '柑': 2, '果': 1 } }, { t: "空灵深邃、带有自然水声的氛围电子", s: { '水': 2, '西': 1 } }, { t: "低沉慵懒、带点辛香的复古爵士", s: { '东': 2, '馥': 1 } }, { t: "温暖治愈的民谣或轻柔的灵魂乐", s: { '芳': 2, '美': 1 } }] },
+        { q: "出门前，你对身上气味的最后一道要求是：", opts: [{ t: "像刚洗完澡一样，干净纯粹", s: { '馥': 2, '柑': 1 } }, { t: "不能太刻意，要像自带的体香", s: { '芳': 2, '绿': 1 } }, { t: "要精致且充满浪漫气息", s: { '花': 2, '西': 1 } }, { t: "要有极具辨识度的个人风格", s: { '皮': 2, '东': 1 } }] },
+        { q: "面对生活中的规则和条条框框，你的态度是：", opts: [{ t: "遵守规则，但我保留自己的意见", s: { '馥': 2, '木': 1 } }, { t: "只在它合理的时候听，不合理就绕开", s: { '绿': 2, '柑': 1 } }, { t: "能绕就绕，不喜欢被束缚", s: { '皮': 2, '水': 1 } }, { t: "喜欢打破常规，重写规则", s: { '东': 2, '皮': 1 } }] },
+        { q: "如果让你形容自己身上的“矛盾感”，你会选：", opts: [{ t: "看着热情，其实内心有很清醒的距离感", s: { '果': 2, '柑': 1 } }, { t: "看着温柔，其实非常固执且有自己的刺", s: { '花': 2, '西': 1 } }, { t: "看着独立，其实非常渴望深度的联结", s: { '水': 2, '木': 1 } }, { t: "看着随和，其实有自己不可打破的秩序", s: { '馥': 2, '芳': 1 } }] },
+        { q: "别人评价你“很有个性”时，你的内心OS是：", opts: [{ t: "礼貌接受，其实只想做个普通人", s: { '馥': 2, '花': 1 } }, { t: "看情况，我觉得自己挺随和的", s: { '绿': 2, '水': 1 } }, { t: "挺开心的，这就是我想要的标签", s: { '皮': 2, '果': 1 } }, { t: "觉得还不够，我还要更极致一点", s: { '东': 2, '西': 1 } }] },
+        { q: "在旅行中，你更想住进怎样的酒店？", opts: [{ t: "极简设计的白墙民宿，光线通透", s: { '柑': 2, '水': 1 } }, { t: "远离城市、被森林或草药田包围的木屋", s: { '木': 2, '芳': 1 } }, { t: "充满当地历史文化气息、复古华丽的套房", s: { '东': 2, '西': 1 } }, { t: "布置得非常柔软甜蜜，充满氛围感的房间", s: { '美': 2, '花': 1 } }] },
+        { q: "哪一种“无聊”最让你感到难以忍受？", opts: [{ t: "一成不变，永远看不到新的事物", s: { '皮': 2, '果': 1 } }, { t: "没有品位，什么都差不多就行了", s: { '西': 2, '花': 1 } }, { t: "没有边界，被迫和不喜欢的人绑在一起", s: { '水': 2, '木': 1 } }, { t: "没有温度，人与人之间冷漠疏离", s: { '美': 2, '芳': 1 } }] },
+        { q: "如果你可以选择一个气味作为你的专属签名：", opts: [{ t: "雨后折断的青草与绿叶", s: { '绿': 2, '水': 1 } }, { t: "泛黄旧书与木柜的干燥气息", s: { '西': 2, '木': 1 } }, { t: "旧机车皮夹克与香烟的性感", s: { '皮': 2, '东': 1 } }, { t: "冬天早晨香草热牛奶的治愈", s: { '美': 2, '花': 1 } }] },
+        { q: "当你在人群中感到疲惫时，你的第一反应是：", opts: [{ t: "找个安静的地方大口呼吸新鲜空气", s: { '绿': 2, '芳': 1 } }, { t: "想喝一杯冰水，或者洗个冷水脸", s: { '水': 2, '柑': 1 } }, { t: "点燃一根木质香薰，把自己包裹起来", s: { '木': 2, '东': 1 } }, { t: "打开社交软件，看看有没有人找你", s: { '花': 2, '美': 1 } }] },
+        { q: "如果要给自己的生活加一点魔法，你希望是：", opts: [{ t: "让所有不开心的记忆全都烟消云散", s: { '柑': 2, '绿': 1 } }, { t: "能瞬间读懂所有人心里的真实想法", s: { '西': 2, '东': 1 } }, { t: "可以随时瞬移，去任何想去的地方", s: { '水': 2, '皮': 1 } }, { t: "让身边的人都能感受到满溢的幸福感", s: { '美': 2, '花': 1 } }] },
+        { q: "你觉得真正的“高级感”来源于哪里？", opts: [{ t: "干净、克制，不张扬的得体", s: { '馥': 2, '木': 1 } }, { t: "不盲从，有自己独立审美的怪癖", s: { '皮': 2, '东': 1 } }, { t: "历经岁月沉淀后，留下来的那点旧", s: { '西': 2, '花': 1 } }, { t: "毫不费力、天然去雕饰的松弛", s: { '芳': 2, '绿': 1 } }] },
+        { q: "回顾过去，你最怀念的是：", opts: [{ t: "那个充满阳光和橘子汽水味的夏天", s: { '柑': 2, '果': 1 } }, { t: "某次淋雨后在草地上奔跑的自由", s: { '水': 2, '绿': 1 } }, { t: "某个深夜，被拥抱时闻到的温柔花香", s: { '花': 2, '美': 1 } }, { t: "那些陪伴你很久、带有自己体温的旧物", s: { '木': 2, '西': 1 } }] },
+        { q: "在别人眼中，你身上最迷人的“反差感”是：", opts: [{ t: "看着像个海王/海后，其实是个纯爱战神", s: { '皮': 2, '美': 1 } }, { t: "看着很冷酷，其实内心非常柔软和护短", s: { '西': 2, '木': 1 } }, { t: "看着很随和好说话，其实底线分明", s: { '馥': 2, '绿': 1 } }, { t: "看着需要人照顾，其实非常独立清醒", s: { '水': 2, '花': 1 } }] },
+        { q: "如果最终要选一种植物来代表你的灵魂，你会走向：", opts: [{ t: "阳光下的柑橘树", s: { '柑': 2, '果': 1 } }, { t: "静谧的雨后苔藓", s: { '西': 2, '绿': 1 } }, { t: "深秋的干燥雪松", s: { '木': 2, '东': 1 } }, { t: "雨后鲜嫩的青草", s: { '绿': 2, '芳': 1 } }] }
+    ];
+
+    // ==========================================
+    // 3. 完整结果数据
+    // ==========================================
+    const results = {
+        '西': { 
+            category: "复古西普调", 
+            eng: "Chypre",
+            title: "藏于时光深处的神秘主义者", 
+            quote: "有些魅力不需要被看见太多次，一次就足够让人记住。", 
+            archive: [
+                "你像一座雨后的古老花园，安静、深邃，却有着让人难以忘记的气息。", 
+                "你不太喜欢刻意表现自己，也不习惯为了融入某个圈子而改变原本的模样。比起热闹的表面关系，你更看重精神上的契合与灵魂的共鸣。", 
+                "你身上有一种独特的复古气质，不追逐短暂的流行，也不急于得到别人的认可。你相信真正有价值的东西，经得起时间的沉淀。"
+            ], 
+            traits: [
+                { t: "外在性格｜冷静克制", d: "初次接触时，你可能给人一种成熟、理性、不太容易靠近的感觉。你有自己的判断，不喜欢过度表达，也不习惯把所有情绪展现在别人面前。" }, 
+                { t: "内在性格｜深沉细腻", d: "你的内心世界比外表丰富得多。你喜欢观察人和事，能够从细节中捕捉信息。你不轻易相信表面，更愿意花时间了解一件事情的本质。" }, 
+                { t: "隐藏性格｜浪漫的复古主义者", d: "你其实有着非常浪漫的一面，只是不喜欢过于直白的表达。旧书、老电影、复古建筑和有故事感的物件，都可能轻易触动你。" }
+            ], 
+            keywords: ["独立", "知性", "克制", "深沉", "审美", "神秘"], 
+            lifestyle: [
+                { i: "理想空间", t: "深色木质家具、复古书架、暖黄色灯光，以及有年代感的装饰。" }, 
+                { i: "理想周末", t: "逛旧书店、看一场老电影，或者独自在安静的咖啡馆度过下午。" }, 
+                { i: "理想音乐", t: "爵士乐、古典乐、低沉慵懒的灵魂乐。" }, 
+                { i: "仪式感", t: "收藏喜欢的书籍、记录生活片段，为自己留出独处的时间。" }
+            ], 
+            representative: "苔藓、广藿香、佛手柑、橡木苔、木质香。", 
+            top: "清爽的佛手柑，像雨后空气中透出的第一缕清新。", 
+            middle: "带有泥土气息的广藿香与植物香，沉稳而富有层次。", 
+            base: "橡木苔、木质香与温暖的琥珀气息，留下复古而持久的记忆。", 
+            scene: "阴雨天、复古书店、独处阅读、安静的夜晚。" 
+        },
+        '花': { 
+            category: "浪漫花香调", 
+            eng: "Floral",
+            title: "永不落幕的春日梦想家", 
+            quote: "温柔不是没有力量，而是看过世界的复杂，依然愿意相信美好。", 
+            archive: [
+                "你像一座永远不会凋谢的春日花园，温柔、细腻，也拥有属于自己的浪漫世界。", 
+                "你很容易感受到生活中的美好，也擅长发现别人忽略的小细节。你在意情绪的流动，重视人与人之间的真诚，希望生活不仅有柴米油盐，也能保留一点诗意。", 
+                "你看起来柔和，却并不意味着没有原则。你愿意相信美好，但也有自己的坚持。"
+            ], 
+            traits: [
+                { t: "外在性格｜温柔亲和", d: "你通常给人一种舒服、友善的感觉。懂得照顾别人的情绪，也愿意主动表达善意。你不喜欢激烈的冲突，更倾向于用沟通解决问题。" }, 
+                { t: "内在性格｜敏感细腻", d: "你拥有丰富的内心世界，对情绪和细节有着很强的感知力。别人一句无心的话、一个细微的态度变化，都可能被你察觉。" }, 
+                { t: "隐藏性格｜浪漫而有坚持", d: "你看起来随和，但对于真正重视的事情有自己的标准。你向往理想中的生活和关系，不愿意轻易降低自己的期待。" }
+            ], 
+            keywords: ["温柔", "浪漫", "细腻", "感性", "慢热", "理想主义"], 
+            lifestyle: [
+                { i: "理想空间", t: "有阳光、有鲜花、有柔软织物的房间，搭配淡雅的香薰。" }, 
+                { i: "理想周末", t: "睡到自然醒，买一束鲜花，去喜欢的咖啡馆坐一下午。" }, 
+                { i: "理想音乐", t: "轻柔钢琴曲、浪漫爵士乐、温柔的独立流行音乐。" }, 
+                { i: "仪式感", t: "给自己买花、认真吃一顿饭、记录生活中的小惊喜。" }
+            ], 
+            representative: "玫瑰、茉莉、牡丹、铃兰、白花。", 
+            top: "清新的柑橘与淡淡果香，像春日清晨刚刚打开的窗户。", 
+            middle: "玫瑰、茉莉与牡丹，柔软而富有层次，是最具代表性的花香气息。", 
+            base: "温柔的麝香与淡淡木香，为整体香气留下细腻而持久的余韵。", 
+            scene: "春日午后、鲜花盛开的花园、浪漫约会、温柔独处。" 
+        },
+        '柑': { 
+            category: "阳光柑橘调", 
+            eng: "Citrus",
+            title: "永远鲜活的快乐行动派", 
+            quote: "生活不必时时刻刻都精彩，但你总有办法让它重新明亮起来。", 
+            archive: [
+                "你像一颗刚刚剥开的柑橘，明亮、清爽，带着让人忍不住靠近的活力。", 
+                "你喜欢新鲜的事物，对生活始终保留着好奇心。比起反复纠结，你更愿意先去尝试；比起等待机会，你更习惯主动创造机会。", 
+                "你不喜欢生活一成不变，也不愿意被太多规则束缚。你的快乐往往来自简单而真实的体验。"
+            ], 
+            traits: [
+                { t: "外在性格｜阳光直接", d: "你给人的第一印象通常比较开朗、自然，容易融入新的环境。你不太喜欢拐弯抹角，更倾向于坦率表达自己的想法。" }, 
+                { t: "内在性格｜充满好奇", d: "你的内心有很强的探索欲，对新鲜事物保持着热情。你喜欢尝试不同的生活方式，也希望自己的世界始终有新的可能。" }, 
+                { t: "隐藏性格｜不愿被束缚", d: "虽然你看起来随性乐观，但其实非常重视自由。你不喜欢被过度干涉，也不愿意为了稳定而放弃自己的探索欲。" }
+            ], 
+            keywords: ["开朗", "热情", "活力", "直接", "好奇", "自由"], 
+            lifestyle: [
+                { i: "理想空间", t: "采光充足的大房间、明亮的窗户、清新的绿植。" }, 
+                { i: "理想周末", t: "临时决定一场短途旅行，探索没去过的街区，尝试新开的餐厅。" }, 
+                { i: "理想音乐", t: "轻快流行乐、夏日独立音乐、节奏明亮的电子乐。" }, 
+                { i: "仪式感", t: "晨间运动、喝一杯鲜榨果汁、用照片记录新鲜体验。" }
+            ], 
+            representative: "佛手柑、柠檬、橙花、葡萄柚、橘子。", 
+            top: "明亮的柠檬与葡萄柚，清爽直接，像盛夏阳光扑面而来。", 
+            middle: "橙花与苦橙叶，带着轻盈的植物气息，让清新感更有层次。", 
+            base: "淡淡的麝香与雪松，柔和收尾，不让香气过于轻飘。", 
+            scene: "夏日出游、晨间通勤、户外活动、阳光明媚的日子。" 
+        },
+        '水': { 
+            category: "清冷水生调", 
+            eng: "Aquatic",
+            title: "灵魂自由的深海漫游者", 
+            quote: "不必成为谁期待的模样，你本身就拥有辽阔的世界。", 
+            archive: [
+                "你像一片辽阔的海面，表面平静，内心却有着自己的潮汐。", 
+                "你喜欢自由，不太愿意被外界的声音左右。你拥有独立的精神世界，能够享受热闹，也能够坦然面对独处。", 
+                "你不喜欢过于复杂的人际关系，也不习惯为了迎合别人而改变自己。比起被关注，你更在意是否真正自在。"
+            ], 
+            traits: [
+                { t: "外在性格｜清冷从容", d: "你给人的感觉通常比较冷静、干净，不会刻意制造存在感。面对陌生环境，你更倾向于先观察，再决定如何融入。" }, 
+                { t: "内在性格｜独立通透", d: "你有自己的思考方式，不容易因为别人的评价而改变决定。你重视精神自由，也希望拥有足够的个人空间。" }, 
+                { t: "隐藏性格｜向往深层连接", d: "虽然你看起来不太依赖别人，但内心并不是不需要陪伴。你只是更渴望能够理解你、尊重你边界的人。" }
+            ], 
+            keywords: ["自由", "冷静", "独立", "通透", "随性", "理性"], 
+            lifestyle: [
+                { i: "理想空间", t: "大面积落地窗、浅色家具、自然光线与简洁的空间设计。" }, 
+                { i: "理想周末", t: "海边散步、独自旅行，或者找一个安静的地方放空。" }, 
+                { i: "理想音乐", t: "氛围电子乐、空灵音乐、轻柔的环境音乐。" }, 
+                { i: "仪式感", t: "晨间散步、整理房间、留出不被打扰的独处时间。" }
+            ], 
+            representative: "海盐、海洋气息、水生植物、白麝香、清新木质香。", 
+            top: "清透的海洋气息与柑橘，像海风迎面吹来的瞬间。", 
+            middle: "水生植物与轻柔花香，呈现出湿润、干净的层次。", 
+            base: "白麝香与淡淡木质香，留下安静而清冷的气息。", 
+            scene: "海边度假、夏日清晨、日常通勤、独处时光。" 
+        },
+        '绿': { 
+            category: "自然绿叶调", 
+            eng: "Green",
+            title: "呼吸着的生活观察家", 
+            quote: "不必刻意盛开，按照自己的节奏生长，也是一种美好。", 
+            archive: [
+                "你像一片刚刚被雨水洗过的绿叶，真实、自然，带着不加修饰的生命力。", 
+                "你不太喜欢复杂的表达，也不追求过度包装的生活。比起表面的热闹，你更享受自然、简单、有呼吸感的状态。", 
+                "你善于观察，也愿意花时间感受生活本来的样子。对于你来说，舒服比华丽重要，真实比讨好重要。"
+            ], 
+            traits: [
+                { t: "外在性格｜自然随和", d: "你给人的感觉比较真实、不做作。和你相处通常没有太多压力，你不喜欢复杂的社交规则，也不会刻意表现自己。" }, 
+                { t: "内在性格｜敏锐细致", d: "你对环境和细节有自己的感受力。你可能很容易注意到天气变化、植物生长，或者生活中一些不被留意的小事。" }, 
+                { t: "隐藏性格｜坚持自我", d: "你看起来随性，但其实有自己的生活原则。你不太容易被外界的潮流影响，也不愿意为了迎合大众而失去自己的节奏。" }
+            ], 
+            keywords: ["自然", "真实", "敏锐", "松弛", "简单", "坚持"], 
+            lifestyle: [
+                { i: "理想空间", t: "有阳台和绿植的房间，原木家具、自然材质和充足的阳光。" }, 
+                { i: "理想周末", t: "去公园散步、逛植物园、体验露营，或者在家整理植物。" }, 
+                { i: "理想音乐", t: "民谣、自然环境音乐、轻柔的独立音乐。" }, 
+                { i: "仪式感", t: "照顾植物、亲手准备简单的食物、享受不被安排的下午。" }
+            ], 
+            representative: "罗勒、紫罗兰叶、青草、无花果叶、绿茶。", 
+            top: "清脆的青草与绿叶气息，像刚刚折下的植物茎叶。", 
+            middle: "罗勒、紫罗兰叶与绿茶，清新中带着细腻的植物质感。", 
+            base: "淡淡的雪松与白麝香，让绿意逐渐沉淀，变得温和干净。", 
+            scene: "清晨散步、植物园、春夏日常、周末居家。" 
+        },
+        '果': { 
+            category: "甜美果香调", 
+            eng: "Fruity",
+            title: "制造多巴胺的氛围制造者", 
+            quote: "生活已经足够复杂了，不如给自己多一点甜。", 
+            archive: [
+                "你像一篮刚刚采摘的成熟水果，鲜活、甜美，拥有让生活变得有趣的能力。", 
+                "你喜欢有趣的人和事，也很容易被新鲜的体验吸引。你不喜欢过分沉闷的氛围，总希望生活能够多一点惊喜、多一点色彩。", 
+                "你拥有很强的情绪感染力，开心的时候愿意分享，喜欢用轻松的方式表达自己的热情。"
+            ], 
+            traits: [
+                { t: "外在性格｜活泼灵动", d: "你给人的感觉比较有亲和力，容易让气氛变得轻松。你喜欢分享有趣的事情，也愿意主动制造一些小惊喜。" }, 
+                { t: "内在性格｜情绪丰富", d: "你的情绪感知比较细腻，对喜欢的事物容易投入热情。你向往有趣、有变化的生活，不太喜欢长时间重复同一种状态。" }, 
+                { t: "隐藏性格｜渴望被认真对待", d: "你看起来乐观、活泼，但也希望自己的认真被看见。你不希望别人只看到你有趣的一面，也希望有人愿意了解你更真实的想法。" }
+            ], 
+            keywords: ["甜美", "灵动", "活泼", "热情", "好奇", "感染力"], 
+            lifestyle: [
+                { i: "理想空间", t: "明亮的房间、彩色装饰、鲜花和充满生活气息的小物件。" }, 
+                { i: "理想周末", t: "和朋友逛市集、打卡甜品店、拍照记录生活。" }, 
+                { i: "理想音乐", t: "轻快流行乐、甜酷电子乐、节奏感强的音乐。" }, 
+                { i: "仪式感", t: "尝试新甜品、收集可爱的物品、为普通日子制造小惊喜。" }
+            ], 
+            representative: "桃子、草莓、梨、覆盆子、黑加仑。", 
+            top: "清甜的梨与柑橘，带来轻快明亮的第一印象。", 
+            middle: "桃子、草莓与覆盆子，果香饱满，甜美而富有活力。", 
+            base: "柔和的麝香与淡淡香草，让甜味更加圆润、温暖。", 
+            scene: "约会、逛街、朋友聚会、轻松愉快的日常。" 
+        },
+        '美': { 
+            category: "治愈美食调", 
+            eng: "Gourmand",
+            title: "收集人间烟火的幸福收藏家", 
+            quote: "真正的幸福，往往藏在那些热气腾腾的小日子里。", 
+            archive: [
+                "你像刚刚出炉的香草蛋糕，温暖、柔软，带着一种让人忍不住靠近的幸福感。", 
+                "你很懂得享受生活，也愿意在平凡的小事中寻找快乐。你可能喜欢一顿认真准备的晚餐、一杯热咖啡，或者一个没有安排的慵懒下午。", 
+                "你重视生活的温度，也希望身边的人能够感受到你的善意。对你来说，幸福不一定需要很盛大，有时候一份简单的满足就足够。"
+            ], 
+            traits: [
+                { t: "外在性格｜温暖亲切", d: "你给人的感觉通常比较友好、有亲和力。你喜欢分享，也愿意用实际行动表达关心，让身边的人感到放松。" }, 
+                { t: "内在性格｜懂得享受", d: "你对生活品质有自己的理解。你喜欢美食、舒适的环境和愉悦的感官体验，也懂得在忙碌中给自己寻找一点快乐。" }, 
+                { t: "隐藏性格｜渴望稳定的幸福", d: "你看起来随和，但其实很重视安全感和生活中的确定性。比起短暂的刺激，你更向往细水长流的陪伴与温暖。" }
+            ], 
+            keywords: ["温暖", "治愈", "亲和", "享受", "感性", "满足"], 
+            lifestyle: [
+                { i: "理想空间", t: "温暖的灯光、柔软沙发、香薰蜡烛和一个可以安心休息的角落。" }, 
+                { i: "理想周末", t: "睡到自然醒，做一顿喜欢的饭，去面包店买刚出炉的甜点。" }, 
+                { i: "理想音乐", t: "慵懒爵士、轻柔灵魂乐、复古流行音乐。" }, 
+                { i: "仪式感", t: "认真吃早餐、尝试新的食谱、收集喜欢的杯子和餐具。" }
+            ], 
+            representative: "香草、焦糖、可可、咖啡、杏仁。", 
+            top: "淡淡的咖啡与杏仁香气，像走进一家温暖的甜品店。", 
+            middle: "香草、焦糖与可可，甜润浓郁，带来丰富的幸福感。", 
+            base: "零陵香豆与温暖木质香，让甜美气息变得更加柔和绵长。", 
+            scene: "秋冬午后、咖啡馆、居家休息、温暖的约会。" 
+        },
+        '东': { 
+            category: "神秘东方调", 
+            eng: "Oriental",
+            title: "蛊惑人心的深邃探索者", 
+            quote: "真正迷人的灵魂，从来不只有一种颜色。", 
+            archive: [
+                "你像暮色中一座古老而神秘的殿堂，浓郁、深邃，拥有不容易被定义的独特魅力。", 
+                "你不太喜欢浅尝辄止的体验，对事物往往有更深层次的兴趣。你重视精神世界，也愿意探索那些不那么容易被理解的东西。", 
+                "你身上有一种鲜明的个人气场，不需要刻意张扬，也很难被简单归类。你喜欢有层次、有故事、有记忆点的生活。"
+            ], 
+            traits: [
+                { t: "外在性格｜自信有气场", d: "你给人的感觉比较鲜明，不容易被忽视。你不喜欢过分平淡的表达，也愿意展示自己独特的审美和态度。" }, 
+                { t: "内在性格｜深邃而感性", d: "你拥有丰富的精神世界，对文化、艺术和有故事感的事物容易产生兴趣。你不满足于表面的答案，更愿意深入了解事物背后的意义。" }, 
+                { t: "隐藏性格｜热烈而有执念", d: "你看起来沉稳，但对真正喜欢的事情往往充满热情。一旦认定某个目标，就会投入很多精力，不轻易改变自己的选择。" }
+            ], 
+            keywords: ["神秘", "深邃", "自信", "热烈", "独特", "感性"], 
+            lifestyle: [
+                { i: "理想空间", t: "深色木质家具、东方艺术摆件、暖色灯光与带有异域感的装饰。" }, 
+                { i: "理想周末", t: "参观艺术展、探索不同文化的街区、去有历史感的建筑中寻找灵感。" }, 
+                { i: "理想音乐", t: "世界音乐、民族器乐、空灵氛围音乐。" }, 
+                { i: "仪式感", t: "点燃香薰、收藏有故事的物件、为自己创造安静的思考空间。" }
+            ], 
+            representative: "琥珀、香草、乳香、没药、树脂、辛香料。", 
+            top: "温暖的辛香与微微甜意，带来浓郁而神秘的开场。", 
+            middle: "乳香、没药与柔和花香，营造出深邃而富有层次的气息。", 
+            base: "琥珀、香草与树脂香，温暖、绵长，留下令人难忘的余韵。", 
+            scene: "夜晚聚会、艺术空间、秋冬季节、特别的约会。" 
+        },
+        '芳': { 
+            category: "清醒芳香调", 
+            eng: "Aromatic",
+            title: "掌控生活节拍的秩序领航员", 
+            quote: "清醒地生活，也可以拥有温柔而坚定的内心。", 
+            archive: [
+                "你像一片被阳光晒暖的草药田，清爽、干净，带着一种坚定而自然的力量。", 
+                "你喜欢清晰、有条理的生活，不太习惯被混乱的情绪和复杂的关系牵着走。面对问题，你更倾向于寻找实际的解决方式，而不是停留在反复纠结中。", 
+                "你有自己的节奏，也懂得为生活建立秩序。你不一定追求热闹，但很清楚什么样的状态最适合自己。"
+            ], 
+            traits: [
+                { t: "外在性格｜干练理性", d: "你给人的感觉比较清爽、利落，做事有条理。面对事情时，你通常能够保持冷静，不容易被一时的情绪带偏。" }, 
+                { t: "内在性格｜重视秩序", d: "你喜欢明确的计划和稳定的节奏。你不一定要求所有事情都完美，但希望自己能够掌握生活的主动权。" }, 
+                { t: "隐藏性格｜需要放松的完美主义者", d: "你可能比自己想象中更加在意细节。有时候会因为想把事情做好而给自己压力，也容易忘记给自己留出休息的时间。" }
+            ], 
+            keywords: ["理性", "自律", "清醒", "干练", "有序", "坚定"], 
+            lifestyle: [
+                { i: "理想空间", t: "干净整洁的房间、简洁的家具、绿植和功能明确的收纳区域。" }, 
+                { i: "理想周末", t: "晨间运动、整理生活空间、阅读或完成一项计划已久的事情。" }, 
+                { i: "理想音乐", t: "轻爵士、器乐、节奏平稳的电子音乐。" }, 
+                { i: "仪式感", t: "制定每日计划、规律运动、整理桌面、给生活留出独处时间。" }
+            ], 
+            representative: "薰衣草、迷迭香、鼠尾草、百里香、芳香草本。", 
+            top: "清新的迷迭香与草本气息，像清晨走进被阳光唤醒的植物园。", 
+            middle: "薰衣草、鼠尾草与芳香植物，干净、舒缓，呈现自然的层次感。", 
+            base: "淡淡的木质香与麝香，让清爽的气息逐渐沉稳下来。", 
+            scene: "日常办公、晨间运动、阅读时光、需要保持清爽状态的日子。" 
+        },
+        '木': { 
+            category: "沉稳木质调", 
+            eng: "Woody",
+            title: "极具耐心的精神定海针", 
+            quote: "真正的力量，不是声势浩大，而是始终坚定地站在自己的位置上。", 
+            archive: [
+                "你像一片黄昏时分的森林，沉稳、安静，拥有让人安心的力量。", 
+                "你不喜欢过度浮夸的表达，也不习惯通过外在的热闹证明自己。你更愿意把时间花在真正重要的事情上，慢慢建立自己的生活和价值。", 
+                "你看重长期关系，也相信时间能够检验很多东西。你不一定是最引人注目的那个人，却常常是别人愿意信赖的存在。"
+            ], 
+            traits: [
+                { t: "外在性格｜沉稳可靠", d: "你给人的感觉比较成熟、冷静，不容易因为外界变化而慌乱。你做事讲究实际，也愿意承担自己的责任。" }, 
+                { t: "内在性格｜坚定有主见", d: "你有自己的价值判断，不太容易被别人的意见左右。对于真正重要的事情，你愿意投入时间，也有耐心等待结果。" }, 
+                { t: "隐藏性格｜柔软而重感情", d: "你看起来独立，其实非常珍惜长期积累的感情。你不一定擅长表达，但会通过行动让别人感受到你的在意。" }
+            ], 
+            keywords: ["沉稳", "坚定", "可靠", "内敛", "耐心", "深情"], 
+            lifestyle: [
+                { i: "理想空间", t: "原木家具、自然石材、柔和灯光，以及带有森林气息的空间。" }, 
+                { i: "理想周末", t: "去山林徒步、在安静的地方阅读，或者一个人享受慢节奏的生活。" }, 
+                { i: "理想音乐", t: "民谣、低音爵士、古典音乐、自然环境音。" }, 
+                { i: "仪式感", t: "阅读纸质书、喝一杯手冲咖啡、整理收藏的物品。" }
+            ], 
+            representative: "雪松、檀香、香根草、柏木、广藿香。", 
+            top: "清新的柏木与淡淡植物气息，像走进清晨的森林。", 
+            middle: "雪松与香根草，干燥、温暖，呈现木材自然的纹理。", 
+            base: "檀香与广藿香，沉稳绵长，留下安静而有力量的气息。", 
+            scene: "秋冬日常、阅读、商务场合、安静独处。" 
+        },
+        '馥': { 
+            category: "利落馥奇调", 
+            eng: "Fougère",
+            title: "进退有度的分寸感大师", 
+            quote: "理性让你看清世界，浪漫让你依然热爱生活。", 
+            archive: [
+                "你像一片被风吹拂的蕨类森林，既有草木的清新，也有薰衣草般的优雅与秩序。", 
+                "你拥有理性的一面，也保留着对生活的浪漫想象。你不会轻易被情绪左右，但也不是一个缺乏感受力的人。", 
+                "你喜欢有品质、有逻辑、有层次的事物，对自己的生活和审美有一定要求。你既能享受独处，也懂得在合适的关系中表达自己。"
+            ], 
+            traits: [
+                { t: "外在性格｜知性优雅", d: "你给人的感觉比较得体、成熟，拥有自己的审美标准。你不喜欢过度张扬，更欣赏有分寸、有细节的表达。" }, 
+                { t: "内在性格｜理性与感性平衡", d: "你能够用理性分析问题，也愿意倾听自己的感受。面对选择时，你通常不会只凭一时冲动，而是更注重整体的平衡。" }, 
+                { t: "隐藏性格｜追求精神共鸣", d: "你对人与人之间的交流有一定要求。比起表面的热闹，你更喜欢有思想、有内容的对话，也希望身边的人能够理解自己的想法。" }
+            ], 
+            keywords: ["知性", "优雅", "理性", "平衡", "审美", "探索"], 
+            lifestyle: [
+                { i: "理想空间", t: "简洁优雅的书房、复古皮质家具、绿植与质感装饰。" }, 
+                { i: "理想周末", t: "逛艺术展、阅读、听音乐会，或者去有设计感的咖啡馆。" }, 
+                { i: "理想音乐", t: "古典乐、爵士乐、轻柔的器乐作品。" }, 
+                { i: "仪式感", t: "整理阅读清单、收藏喜欢的艺术作品、认真规划自己的时间。" }
+            ], 
+            representative: "薰衣草、橡木苔、香豆素、天竺葵、香根草。", 
+            top: "清新的芳香草本，带着薰衣草与柑橘的干净气息。", 
+            middle: "薰衣草、天竺葵与柔和花香，优雅而富有层次。", 
+            base: "橡木苔、香豆素与香根草，温暖中带着微微的粉感和复古气息。", 
+            scene: "商务场合、艺术展览、秋日午后、正式而不拘谨的日常。" 
+        },
+        '皮': { 
+            category: "不羁皮革调", 
+            eng: "Leather",
+            title: "拒绝被定义的个性表达者", 
+            quote: "不必成为标准答案，你的独特本身就是一种风格。", 
+            archive: [
+                "你像一本被岁月打磨过的旧皮书，带着独特的纹理、鲜明的个性和不容易被复制的气质。", 
+                "你不太喜欢千篇一律的生活，也不愿意为了得到认可而刻意改变自己。你有自己的审美和判断，对喜欢的事物往往有很强的个人偏好。", 
+                "你可能不属于传统意义上温顺、容易被定义的类型，但你的独特正是最有辨识度的地方。"
+            ], 
+            traits: [
+                { t: "外在性格｜鲜明有态度", d: "你给人的感觉通常比较有个性，不喜欢过度迎合，也不太在意别人是否完全理解自己。你更愿意按照自己的想法表达和行动。" }, 
+                { t: "内在性格｜独立而坚定", d: "你拥有较强的自我意识，对于喜欢的事情有自己的判断。你不太容易被潮流左右，也不喜欢别人替自己做决定。" }, 
+                { t: "隐藏性格｜细腻的感官收藏家", d: "你其实很在意质感和细节。皮革的纹理、旧物的气味、金属的光泽、独特的设计，都可能成为你审美世界的一部分。" }
+            ], 
+            keywords: ["个性", "独立", "果敢", "鲜明", "审美", "自我"], 
+            lifestyle: [
+                { i: "理想空间", t: "复古皮质沙发、深色家具、金属装饰、艺术海报与有故事感的收藏品。" }, 
+                { i: "理想周末", t: "逛古着店、看独立电影、探索小众艺术空间，寻找独特的设计物件。" }, 
+                { i: "理想音乐", t: "摇滚、布鲁斯、另类独立音乐、复古爵士。" }, 
+                { i: "仪式感", t: "收藏有质感的物件、搭建自己的音乐清单、记录独特的生活灵感。" }
+            ], 
+            representative: "皮革、烟草、桦木焦油、藏红花、木质香。", 
+            top: "微微辛香与干燥的木质气息，带来鲜明而有态度的开场。", 
+            middle: "皮革与烟草气息逐渐展开，厚实、独特，带有复古质感。", 
+            base: "温暖的木质香与琥珀气息，让整体香气更加沉稳而持久。", 
+            scene: "夜晚出行、艺术活动、秋冬季节、个性表达的场合。" 
+        }
+    };
+
+    const subScentMap = {
+        '西': "在底色之外，你还藏着一丝复古与冷感。", '花': "在坚硬的壳下，你依然保留着对浪漫与温柔的渴望。",
+        '柑': "在复杂的思绪里，你总能找到一种利落与反内耗的清爽。", '水': "在纷扰的世界中，你始终需要一片不被打扰的独立海域。",
+        '绿': "在世俗的规则下，你依然有一份追求自然与纯粹的本能。", '果': "在平淡的日子里，你总能找到制造快乐的甜味多巴胺。",
+        '美': "在疲惫的时刻，你非常渴望有一份热腾腾的安全感。", '东': "在常规的框架外，你的灵魂深处有一种神秘而浓烈的张力。",
+        '芳': "在紧绷的日常中，你有一种能随时自我疗愈的松弛感。", '木': "在变化的世界里，你比想象中更加沉稳、坚定和长情。",
+        '馥': "在随性的外表下，你依然保持着一种得体与分寸感。", '皮': "在温和的表面下，你骨子里其实极其不羁、有态度。"
+    };
+
+    const contrastScentMap = {
+        '西': "即使你再渴望融入，也别忘了你骨子里那份不讨好的清冷与高级。", '花': "即使你习惯了坚强，也允许自己偶尔做一个需要被呵护的浪漫主义者。",
+        '柑': "偶尔放下那些沉重的包袱，用最简单直接的方式去晒晒太阳吧。", '水': "在嘈杂的社交过后，你极度渴望把自己浸泡在无人打扰的冷水里。",
+        '绿': "去公园走走吧，你比想象中更需要那种不加雕饰的天然绿意。", '果': "别总是绷着神经，你偶尔的幼稚和雀跃，其实非常有感染力。",
+        '美': "即使你看起来再独立清醒，你的内心深处依然渴望被毫无保留地偏爱与治愈。", '东': "你的温柔里，其实可以藏一点危险、性感与不可抗拒的侵略性。",
+        '芳': "在高压的秩序之外，给自己点一根香薰，享受一次理直气壮的“浪费时间”。", '木': "你其实非常需要一个像大树一样的人或物，来接住你所有的不安。",
+        '馥': "脱下那件花哨的外衣，你内在的干净、克制与利落同样迷人。", '皮': "你的温柔不是软弱，在必要时，你完全有撕破脸的魄力和锋芒。"
+    };
+
+    // ==========================================
+    // 4. 状态与逻辑
+    // ==========================================
+    let currentQuestion = 0;
+    let answers = {}; 
+    let scores = { '果': 0, '柑': 0, '水': 0, '花': 0, '东': 0, '木': 0, '皮': 0, '西': 0, '馥': 0, '芳': 0, '绿': 0, '美': 0 };
+    let maxScores = { '果': 0, '柑': 0, '水': 0, '花': 0, '东': 0, '木': 0, '皮': 0, '西': 0, '馥': 0, '芳': 0, '绿': 0, '美': 0 };
+
+    // 计算满分池
+    for (let i = 0; i < questions.length; i++) {
+        let q = questions[i];
+        let tempMax = { '果': 0, '柑': 0, '水': 0, '花': 0, '东': 0, '木': 0, '皮': 0, '西': 0, '馥': 0, '芳': 0, '绿': 0, '美': 0 };
+        q.opts.forEach(opt => {
+            for (let sKey in opt.s) {
+                if (opt.s[sKey] > tempMax[sKey]) { tempMax[sKey] = opt.s[sKey]; }
+            }
+        });
+        for (let sKey in tempMax) { maxScores[sKey] += tempMax[sKey]; }
+    }
+
+    const homePage = document.getElementById('home-page');
+    const quizPage = document.getElementById('quiz-page');
+    const resultPage = document.getElementById('result-page');
+    const clockBtn = document.getElementById('clock-btn');
+    
+    const qTitle = document.getElementById('question-title');
+    const optsList = document.getElementById('options-list');
+    const progressText = document.getElementById('progress-text');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    
+    const scentModal = document.getElementById('scent-modal');
+    const toast = document.getElementById('toast');
+
+    // 兑换码逻辑
+    const redeemModal = document.getElementById('redeem-modal');
+    const redeemInput = document.getElementById('redeem-input');
+    const redeemError = document.getElementById('redeem-error');
+
+    function showRedeemModal() {
+        redeemModal.classList.add('show');
+        redeemInput.value = '';
+        redeemError.style.display = 'none';
+        setTimeout(() => redeemInput.focus(), 300);
+    }
+
+    function closeRedeemModal() {
+        redeemModal.classList.remove('show');
+    }
+
+    function verifyCode() {
+        const code = redeemInput.value.trim().toUpperCase();
+        if (code === 'SC6852') {
+            closeRedeemModal();
+            startQuiz();
+        } else {
+            redeemError.style.display = 'block';
+            redeemInput.style.borderColor = '#e74c3c';
+            setTimeout(() => { redeemInput.style.borderColor = '#ddd'; }, 1000);
+        }
+    }
+
+    // 允许回车确认
+    redeemInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') verifyCode();
+    });
+
+    // 基础渲染
+    function renderScentCards() {
+        const grid = document.getElementById('scent-grid');
+        let html = '';
+        for (let key in scentData) {
+            const item = scentData[key];
+            html += `
+                <div class="scent-card ${item.bgClass}" onclick="openModal('${key}')">
+                    <div class="scent-card-eng">${item.eng}</div>
+                    <h3>${item.cn}</h3>
+                    <p>${item.desc}</p>
+                </div>
+            `;
+        }
+        grid.innerHTML = html;
+    }
+
+    function openModal(key) {
+        const data = scentData[key];
+        document.getElementById('modal-title-cn').innerText = data.cn;
+        document.getElementById('modal-title-eng').innerText = data.eng;
+        document.getElementById('modal-text').innerText = data.detail;
+        const modalGlow = document.getElementById('modal-glow');
+        modalGlow.style.background = data.bgClass === 'bg-leather' || data.bgClass === 'bg-woody' ? '#c7ae9c' : data.bgClass === 'bg-aquatic' || data.bgClass === 'bg-fougere' ? '#b6d3e6' : '#f0c4d1';
+        scentModal.classList.add('show');
+    }
+
+    function closeModal(e) { if(e) e.stopPropagation(); scentModal.classList.remove('show'); }
+
+    let toastTimeout;
+    function showToast(msg) {
+        toast.innerText = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 2000);
+    }
+
+    function showPage(pageElement) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        pageElement.classList.add('active');
+        window.scrollTo(0, 0);
+        if (pageElement === homePage) { clockBtn.classList.remove('hidden'); } else { clockBtn.classList.add('hidden'); }
+    }
+
+    function goHome() {
+        if(quizPage.classList.contains('active')) { if(!confirm("确定要放弃当前测试并返回首页吗？")) return; }
+        showPage(homePage);
+    }
+
+    function scrollToScents() { document.getElementById('scent-list').scrollIntoView({ behavior: 'smooth' }); }
+
+    function startQuiz() {
+        showPage(quizPage);
+        currentQuestion = 0;
+        answers = {};
+        for (let key in scores) { scores[key] = 0; }
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const qData = questions[currentQuestion];
+        progressText.innerText = `${currentQuestion + 1 < 10 ? '0'+(currentQuestion + 1) : currentQuestion + 1} / 30`;
+        qTitle.innerText = qData.q;
+        optsList.innerHTML = '';
+        
+        if (currentQuestion === 0) { btnPrev.classList.add('hidden'); } else { btnPrev.classList.remove('hidden'); }
+        if (currentQuestion === questions.length - 1) { btnNext.innerText = "查看结果"; } else { btnNext.innerText = "下一题"; }
+
+        const savedChoice = answers[currentQuestion];
+        qData.opts.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            if (savedChoice === index) btn.classList.add('selected');
+            btn.innerText = opt.t;
+            btn.onclick = () => {
+                document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                answers[currentQuestion] = index;
+            };
+            optsList.appendChild(btn);
+        });
+        window.scrollTo(0, 0);
+    }
+
+    function prevQuestion() { if (currentQuestion > 0) { currentQuestion--; renderQuestion(); } }
+
+    function nextQuestion() {
+        if (answers[currentQuestion] === undefined) { showToast("请选择一个选项"); return; }
+        if (currentQuestion < questions.length - 1) { currentQuestion++; renderQuestion(); } else { calculateResult(); }
+    }
+
+    function calculateResult() {
+        for (let key in scores) { scores[key] = 0; }
+        for (let qIdx = 0; qIdx < questions.length; qIdx++) {
+            const choiceIdx = answers[qIdx];
+            if (choiceIdx !== undefined) {
+                const scoreData = questions[qIdx].opts[choiceIdx].s;
+                for (let sKey in scoreData) { scores[sKey] += scoreData[sKey]; }
+            }
+        }
+
+        let percentScores = {};
+        for (let key in scores) {
+            let max = maxScores[key] || 1; 
+            percentScores[key] = (scores[key] / max) * 100;
+        }
+
+        const sortedScores = Object.keys(percentScores).map(key => {
+            return { key: key, val: percentScores[key] };
+        }).sort((a, b) => b.val - a.val);
+
+        const primaryKey = sortedScores[0].key;
+        const subKey = sortedScores[1].key;
+        
+        const contrastMap = { '西': '花', '花': '西', '柑': '水', '水': '东', '绿': '皮', '果': '木', '美': '芳', '东': '柑', '芳': '馥', '木': '果', '馥': '皮', '皮': '花' };
+        const contrastKey = contrastMap[primaryKey];
+
+        showPage(resultPage);
+        
+        let history = JSON.parse(localStorage.getItem('scent_history') || '[]');
+        const now = new Date();
+        const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        if (history.length === 0 || history[0].key !== primaryKey) {
+            history.unshift({ key: primaryKey, time: timeStr });
+            if (history.length > 10) history.pop();
+            localStorage.setItem('scent_history', JSON.stringify(history));
+        }
+
+        renderResultData(primaryKey, subKey, contrastKey, percentScores);
+    }
+
+    function renderResultData(primaryKey, subKey, contrastKey, percentScores) {
+        const r = results[primaryKey];
+        const subR = results[subKey];
+        
+        // 首屏
+        document.getElementById('res-main-title').innerText = r.category; 
+        document.getElementById('res-main-eng').innerText = r.eng; 
+        document.getElementById('res-title').innerText = r.title; 
+        document.getElementById('res-quote').innerHTML = r.quote;
+        
+        document.getElementById('res-main-percent').innerHTML = `${r.category.slice(-3)} ${Math.round(percentScores[primaryKey])}%`;
+        document.getElementById('res-sub-percent').innerHTML = `${subR.category.slice(-3)} ${Math.round(percentScores[subKey])}%`;
+        
+        // 关键词
+        document.getElementById('res-keywords').innerHTML = r.keywords.map(k => `<span class="keyword-tag">#${k}</span>`).join('');
+        
+        // 01 档案
+        document.getElementById('res-archive').innerHTML = r.archive.map(p => `<p>${p}</p>`).join('');
+        
+        // 02 解析
+        document.getElementById('res-traits').innerHTML = r.traits.map(t => `<div class="trait-card"><div class="trait-title">${t.t}</div><div class="trait-desc">${t.d}</div></div>`).join('');
+        
+        // 03 生活方式
+        let lifestyleHtml = r.lifestyle.map(l => `<div class="lifestyle-item"><div class="lifestyle-icon">✦</div><div class="lifestyle-text"><strong>${l.i}</strong>${l.t}</div></div>`).join('');
+        document.getElementById('res-lifestyle').innerHTML = lifestyleHtml;
+        
+        // 04 专属香气
+        document.getElementById('res-representative').innerText = r.representative;
+        document.getElementById('res-top').innerText = r.top;
+        document.getElementById('res-middle').innerText = r.middle;
+        document.getElementById('res-base').innerText = r.base;
+        document.getElementById('res-scene').innerHTML = `<strong>适合的香气场景：</strong> ${r.scene}`;
+
+        // Insight
+        const insightHtml = `
+            <div style="margin-bottom: 15px;">
+                <strong>副调融合｜${subR.category.slice(-3)}：</strong><br>
+                ${subScentMap[subKey]}
+            </div>
+            <div>
+                <strong>隐藏反差｜${results[contrastKey].category.slice(-3)}：</strong><br>
+                ${contrastScentMap[contrastKey]}
+            </div>
+        `;
+        document.getElementById('res-insight').innerHTML = insightHtml;
+    }
+
+    // 截图功能
+    function saveResultImage() {
+        const captureArea = document.getElementById('result-capture-area');
+        showToast("正在生成长图...");
+        window.scrollTo(0, 0);
+        
+        setTimeout(() => {
+            html2canvas(captureArea, {
+                scale: 2, 
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                scrollX: 0,
+                scrollY: -window.scrollY
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                const link = document.createElement('a');
+                link.download = '我的本命香_' + new Date().getTime() + '.jpg';
+                link.href = imgData;
+                link.click();
+                showToast("保存成功！");
+            }).catch(err => {
+                console.error(err);
+                showToast("生成失败，请重试或直接截屏");
+            });
+        }, 300);
+    }
+
+    function toggleHistory() {
+        const drawer = document.getElementById('drawer');
+        const overlay = document.getElementById('drawer-overlay');
+        if (drawer.classList.contains('show')) { drawer.classList.remove('show'); overlay.classList.remove('show'); } 
+        else { renderHistoryList(); drawer.classList.add('show'); overlay.classList.add('show'); }
+    }
+
+    function renderHistoryList() {
+        const historyList = document.getElementById('history-list');
+        const history = JSON.parse(localStorage.getItem('scent_history') || '[]');
+        historyList.innerHTML = '';
+        if (history.length === 0) { historyList.innerHTML = '<div class="empty-history">暂无测试记录，去发现你的香味人格吧。</div>'; return; }
+        history.forEach((item) => {
+            const rData = results[item.key];
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            // 修改为展示香调名称
+            div.innerHTML = `<h4>${rData.category}</h4><span>${item.time}</span>`;
+            div.onclick = () => { 
+                toggleHistory(); 
+                showPage(resultPage); 
+                const contrastMap = { '西': '花', '花': '西', '柑': '水', '水': '东', '绿': '皮', '果': '木', '美': '芳', '东': '柑', '芳': '馥', '木': '果', '馥': '皮', '皮': '花' };
+                renderResultData(item.key, item.key === '西' ? '木' : '西', contrastMap[item.key], { [item.key]: 45, [item.key === '西' ? '木' : '西']: 30 }); 
+            };
+            historyList.appendChild(div);
+        });
+    }
+
+    window.onload = () => { renderScentCards(); };
+</script>
+</body>
+</html>
